@@ -18,6 +18,7 @@ She also breathes, blinks, follows your cursor, hops when you send something, ge
 - ✅ **To-do list.** Claude can add things you need to do yourself; Mochi reminds you.
 - 🎨 **Any color you like.** Pick one when you install, or right-click her → *Change Mochi's Color…*
 - 🔔 **Social notifications (optional).** Turn it on in the installer and she shows little badges for new Instagram, Threads, LinkedIn or X notifications. She reads the unread count from tabs you already have open in Chrome, like "(3) Instagram": no logins, nothing leaves your Mac. Click a badge to jump to that tab.
+  > **Keep those sites open in Chrome tabs.** Mochi can only see sites that have a tab open, so pin them (right-click the tab → *Pin*) and they'll always be there. The installer adds this to Mochi's to-do list as a reminder.
 
 ## Install
 

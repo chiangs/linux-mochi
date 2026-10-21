@@ -45,10 +45,13 @@ if [[ "$yn" =~ ^[Yy] ]]; then
   echo "    1) Instagram   2) Threads   3) LinkedIn   4) X"
   read -r -p "  [1 2 3 4]: " picks
   for n in ${picks:-1 2 3 4}; do
-    case "$n" in 1) SOCIAL="$SOCIAL\"ig\",";; 2) SOCIAL="$SOCIAL\"th\",";; 3) SOCIAL="$SOCIAL\"li\",";; 4) SOCIAL="$SOCIAL\"x\",";; esac
+    case "$n" in 1) SOCIAL="$SOCIAL\"ig\","; NAMES="$NAMES, Instagram";; 2) SOCIAL="$SOCIAL\"th\","; NAMES="$NAMES, Threads";;
+                 3) SOCIAL="$SOCIAL\"li\","; NAMES="$NAMES, LinkedIn";; 4) SOCIAL="$SOCIAL\"x\","; NAMES="$NAMES, X";; esac
   done
   SOCIAL="${SOCIAL%,}"
-  echo "  ✓ Got it. Keep those sites open in a Chrome tab and Mochi will show little badges (click one to jump to it)."
+  NAMES="${NAMES#, }"; [[ "$NAMES" == *", "* ]] && NAMES="${NAMES%, *} and ${NAMES##*, }"   # "Instagram, Threads and X"
+  echo "  ✓ Got it. Important: Mochi can only see sites that are open in a Chrome tab."
+  echo "    Tip: pin them (right-click the tab → Pin) so they're always open. She'll show little badges; click one to jump to it."
   echo "    macOS will ask to let Mochi read Chrome the first time: say OK."
 else
   echo "  No problem. You can turn it on later by running ./install.sh again."
@@ -97,6 +100,10 @@ echo "  ✓ Mochi is in ~/Applications"
 
 # --- 4. connect her to Claude Code ---
 mkdir -p "$DATA/hooks" && cp hooks/notify.py hooks/todo.py "$DATA/hooks/"
+# a reminder in Mochi's own to-do list, so she tells them how social works
+if [ -n "$NAMES" ] && ! grep -q "Chrome tab" "$DATA/todos.json" 2>/dev/null; then
+  python3 "$DATA/hooks/todo.py" add "Open $NAMES in Chrome tabs (pin them!) so Mochi can see your notifications" >/dev/null
+fi
 python3 - "$DATA/hooks/notify.py" <<'PY'
 import json, os, shutil, sys, time
 notify = sys.argv[1]; path = os.path.expanduser("~/.claude/settings.json")
