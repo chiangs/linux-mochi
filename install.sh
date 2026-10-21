@@ -27,13 +27,36 @@ case "${pick:-1}" in
   *) if [[ "$pick" =~ ^[0-9a-fA-F]{6}$ ]]; then HEX="#$pick"; else HEX="#33c7ff"; fi;;
 esac
 mkdir -p "$DATA"
-printf '{"color": "%s"}\n' "$HEX" > "$DATA/config.json"
 R=$((16#${HEX:1:2})); G=$((16#${HEX:3:2})); B=$((16#${HEX:5:2}))
 echo ""
 echo "  $(c $R $G $B)$(c $R $G $B)  Mochi will be $HEX. (You can change it later from her menu.)"
 echo ""
 
-# --- 2. build her ---
+# --- 2. social notifications (optional) ---
+echo "  Want Mochi to tell you when you get new notifications on social media?"
+echo "  She reads the unread count from tabs you already have open in Google Chrome,"
+echo "  like \"(3) Instagram\". No logins, nothing leaves your Mac."
+echo ""
+read -r -p "  Hook up social media? [y/N]: " yn
+SOCIAL=""
+if [[ "$yn" =~ ^[Yy] ]]; then
+  echo ""
+  echo "  Which ones? Type the numbers, like 1 3:"
+  echo "    1) Instagram   2) Threads   3) LinkedIn   4) X"
+  read -r -p "  [1 2 3 4]: " picks
+  for n in ${picks:-1 2 3 4}; do
+    case "$n" in 1) SOCIAL="$SOCIAL\"ig\",";; 2) SOCIAL="$SOCIAL\"th\",";; 3) SOCIAL="$SOCIAL\"li\",";; 4) SOCIAL="$SOCIAL\"x\",";; esac
+  done
+  SOCIAL="${SOCIAL%,}"
+  echo "  ✓ Got it. Keep those sites open in a Chrome tab and Mochi will show little badges (click one to jump to it)."
+  echo "    macOS will ask to let Mochi read Chrome the first time: say OK."
+else
+  echo "  No problem. You can turn it on later by running ./install.sh again."
+fi
+printf '{"color": "%s", "social": [%s]}\n' "$HEX" "$SOCIAL" > "$DATA/config.json"
+echo ""
+
+# --- 3. build her ---
 if ! command -v swiftc >/dev/null; then
   echo "  Mochi needs Apple's command line tools to build. Installing them now (a window will pop up)…"
   xcode-select --install || true
@@ -64,7 +87,7 @@ cat > build/Mochi.app/Contents/Info.plist <<PLIST
   <key>CFBundleVersion</key><string>1</string>
   <key>LSMinimumSystemVersion</key><string>13.0</string>
   <key>LSUIElement</key><true/>
-  <key>NSAppleEventsUsageDescription</key><string>Mochi pastes your message into Terminal, where Claude Code is running.</string>
+  <key>NSAppleEventsUsageDescription</key><string>Mochi pastes your message into Terminal, where Claude Code is running, and (if you turned it on) reads unread counts from social tabs open in Chrome.</string>
 </dict></plist>
 PLIST
 codesign --force --sign - build/Mochi.app >/dev/null 2>&1 || true
@@ -72,7 +95,7 @@ pkill -x Mochi 2>/dev/null || true
 mkdir -p "$HOME/Applications" && rm -rf "$APP" && cp -R build/Mochi.app "$APP"
 echo "  ✓ Mochi is in ~/Applications"
 
-# --- 3. connect her to Claude Code ---
+# --- 4. connect her to Claude Code ---
 mkdir -p "$DATA/hooks" && cp hooks/notify.py hooks/todo.py "$DATA/hooks/"
 python3 - "$DATA/hooks/notify.py" <<'PY'
 import json, os, shutil, sys, time
@@ -84,10 +107,11 @@ cmd = lambda flag: f'python3 "{notify}"{(" " + flag) if flag else ""} 2>/dev/nul
 want = [("Stop", None, ""), ("UserPromptSubmit", None, "--working"), ("PreToolUse", "AskUserQuestion", "--question"),
         ("PreToolUse", "*", "--doing"), ("PostToolUse", "AskUserQuestion", "--answered"), ("PostToolUse", "*", "--progress")]
 hooks = s.setdefault("hooks", {})
+for ev, arr in hooks.items():   # take out any older Mochi hooks first (re-running the installer replaces them)
+    for m in arr: m["hooks"] = [h for h in m.get("hooks", []) if "Mochi/hooks/notify.py" not in h.get("command", "")]
+    arr[:] = [m for m in arr if m.get("hooks")]
 for ev, matcher, flag in want:
     arr = hooks.setdefault(ev, [])
-    for m in arr: m["hooks"] = [h for h in m.get("hooks", []) if "Mochi/hooks/notify.py" not in h.get("command", "")]   # replace an older Mochi hook
-    arr[:] = [m for m in arr if m.get("hooks")]
     entry = {"hooks": [{"type": "command", "command": cmd(flag)}]}
     if matcher: entry["matcher"] = matcher
     arr.append(entry)

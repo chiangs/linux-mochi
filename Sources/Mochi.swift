@@ -105,6 +105,11 @@ func gooColors(_ body: NSColor) -> GooColors {
     let b = body.usingColorSpace(.sRGB) ?? body
     return GooColors(body: b, edge: b.blended(withFraction: 0.38, of: .black) ?? b, shine: b.blended(withFraction: 0.72, of: .white) ?? b)
 }
+func enabledSocial() -> [String] {
+    let file = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("Library/Application Support/Mochi/config.json")
+    guard let d = try? Data(contentsOf: file), let j = try? JSONSerialization.jsonObject(with: d) as? [String: Any] else { return [] }
+    return j["social"] as? [String] ?? []
+}
 func savedColor() -> NSColor {
     let file = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("Library/Application Support/Mochi/config.json")
     if let d = try? Data(contentsOf: file), let j = try? JSONSerialization.jsonObject(with: d) as? [String: Any], let s = j["color"] as? String { return hex(s) }
@@ -115,7 +120,9 @@ func saveColor(_ c: NSColor) {
     let h = String(format: "#%02x%02x%02x", Int(s.redComponent * 255), Int(s.greenComponent * 255), Int(s.blueComponent * 255))
     let dir = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("Library/Application Support/Mochi")
     try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
-    try? JSONSerialization.data(withJSONObject: ["color": h]).write(to: dir.appendingPathComponent("config.json"))
+    let file = dir.appendingPathComponent("config.json")
+    var j = (try? Data(contentsOf: file)).flatMap { try? JSONSerialization.jsonObject(with: $0) as? [String: Any] } ?? [:]
+    j["color"] = h; try? JSONSerialization.data(withJSONObject: j).write(to: file)
 }
 var mochiGoo = gooColors(savedColor())
 
@@ -740,6 +747,12 @@ final class Bar: NSObject, NSApplicationDelegate, NSTextFieldDelegate, NSWindowD
 
         lastMidX = panel.frame.midX
 
+        // social notifications, only if you said yes in the installer: unread counts read from tabs already open in Chrome
+        if !enabledSocial().isEmpty {
+            checkSocial()
+            Timer.scheduledTimer(withTimeInterval: 20, repeats: true) { [weak self] _ in self?.checkSocial() }
+        }
+
         // PB_DEMO=send in the environment plays the send animation without sending anything (for checking it)
         if (ProcessInfo.processInfo.environment["PB_DEMO"] ?? "").contains("send") {
             DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { self.setOpen(true) }
@@ -834,12 +847,13 @@ final class Bar: NSObject, NSApplicationDelegate, NSTextFieldDelegate, NSWindowD
         let r = run("""
         if application "Google Chrome" is not running then return ""
         set out to ""
+        set sep to character id 9   -- a real tab character (inside Chrome's tell block, "tab" means a browser tab)
         tell application "Google Chrome"
             repeat with w in windows
                 set i to 0
                 repeat with t in tabs of w
                     set i to i + 1
-                    set out to out & (id of w) & tab & i & tab & (URL of t) & tab & (title of t) & linefeed
+                    set out to out & (id of w) & sep & i & sep & (URL of t) & sep & (title of t) & linefeed
                 end repeat
             end repeat
         end tell
@@ -852,7 +866,7 @@ final class Bar: NSObject, NSApplicationDelegate, NSTextFieldDelegate, NSWindowD
             let f = line.split(separator: "\t", maxSplits: 3, omittingEmptySubsequences: false)
             guard f.count == 4, let win = Int(f[0]), let tab = Int(f[1]) else { continue }
             let url = String(f[2]).lowercased(), title = String(f[3])
-            guard let site = socialSites.first(where: { s in s.hosts.contains { url.contains("://" + $0) || url.contains("." + $0) } }) else { continue }
+            guard let site = socialSites.filter({ enabledSocial().contains($0.key) }).first(where: { s in s.hosts.contains { url.contains("://" + $0) || url.contains("." + $0) } }) else { continue }
             // "(3) Instagram", "(12+) Feed | LinkedIn"
             var n = 0
             if title.hasPrefix("("), let close = title.firstIndex(of: ")") {
