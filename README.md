@@ -56,9 +56,27 @@ The first time Mochi sends a message, macOS will ask to let her control **Termin
 
 If no Terminal tab is running Claude, she opens one with `claude --continue` and sends your message there.
 
+## Ask Claude to change her
+
+The installer teaches Claude Code how to work on Mochi (it adds a small `mochi` skill to `~/.claude/skills`). So you can just ask Claude, in any project:
+
+> "Make Mochi wear a little party hat on Fridays"
+> "Make Mochi purple"
+> "Have Mochi do a backflip when Claude finishes"
+
+Claude edits her code, rebuilds her and relaunches her. Her code is signed with a certificate the installer makes just for your Mac (kept in your login keychain), so macOS remembers her permissions every time she's rebuilt.
+
+## Updates
+
+```bash
+cd mochi && ./install.sh --update
+```
+
+This gets the newest Mochi from GitHub and rebuilds her, keeping your color and settings. (Or just ask Claude: "update Mochi".)
+
 ## Make her yours
 
-Mochi is one Swift file, `Sources/Mochi.swift`, so she's easy to remix: her outfits, moods, colors and animations are all in there. Change anything, then run `./install.sh` again to rebuild.
+Mochi is one Swift file, `Sources/Mochi.swift`, so she's easy to remix: her outfits, moods, colors and animations are all in there. Change anything, then run `./install.sh --rebuild` to rebuild and relaunch her (or ask Claude to do it).
 
 The hook script, `hooks/notify.py`, is what tells Mochi what Claude is doing. It writes small JSON files into `~/Library/Application Support/Mochi/`, which she watches.
 
@@ -74,7 +92,7 @@ python3 ~/Library/Application\ Support/Mochi/hooks/todo.py add "Upload the new i
 ./uninstall.sh
 ```
 
-This removes the app, her data and her Claude Code hooks.
+This removes the app, her data, her Claude Code hooks and the Mochi skill.
 
 ---
 

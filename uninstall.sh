@@ -1,7 +1,7 @@
 #!/bin/bash
 # removes Mochi, her data and her Claude Code hooks
 pkill -x Mochi 2>/dev/null || true
-rm -rf "$HOME/Applications/Mochi.app" "$HOME/Library/Application Support/Mochi" "$HOME/Library/Logs/Mochi.log"
+rm -rf "$HOME/Applications/Mochi.app" "$HOME/Library/Application Support/Mochi" "$HOME/Library/Logs/Mochi.log" "$HOME/.claude/skills/mochi"
 python3 - <<'PY'
 import json, os
 path = os.path.expanduser("~/.claude/settings.json")

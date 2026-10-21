@@ -1,12 +1,25 @@
 #!/bin/bash
 # Mochi installer: asks what colour she should be, builds her, puts her in ~/Applications,
 # and connects her to Claude Code (adds a few hooks to ~/.claude/settings.json, backing it up first).
+#
+#   ./install.sh            set up from scratch (asks the questions)
+#   ./install.sh --rebuild  rebuild and relaunch after changing her code, keeping your answers (what Claude uses)
+#   ./install.sh --update   get the newest Mochi from GitHub, then rebuild
 set -e
 cd "$(dirname "$0")"
+REPO="$PWD"
 APP="$HOME/Applications/Mochi.app"
 DATA="$HOME/Library/Application Support/Mochi"
+CERT="Mochi Local Signing"
+MODE="${1:-}"
 c() { printf "\033[38;2;%d;%d;%dm██\033[0m" "$1" "$2" "$3"; }
 
+if [ "$MODE" = "--update" ]; then
+  echo "  Getting the newest Mochi…"; git pull --ff-only; MODE="--rebuild"
+fi
+if [ "$MODE" = "--rebuild" ] && [ ! -f "$DATA/config.json" ]; then MODE=""; fi   # never set up yet: ask the questions
+
+if [ "$MODE" != "--rebuild" ]; then
 echo ""
 echo "  🫧  Hi! Let's set up Mochi."
 echo ""
@@ -59,6 +72,8 @@ fi
 printf '{"color": "%s", "social": [%s]}\n' "$HEX" "$SOCIAL" > "$DATA/config.json"
 echo ""
 
+fi   # end of the questions
+
 # --- 3. build her ---
 if ! command -v swiftc >/dev/null; then
   echo "  Mochi needs Apple's command line tools to build. Installing them now (a window will pop up)…"
@@ -93,7 +108,32 @@ cat > build/Mochi.app/Contents/Info.plist <<PLIST
   <key>NSAppleEventsUsageDescription</key><string>Mochi pastes your message into Terminal, where Claude Code is running, and (if you turned it on) reads unread counts from social tabs open in Chrome.</string>
 </dict></plist>
 PLIST
-codesign --force --sign - build/Mochi.app >/dev/null 2>&1 || true
+# sign her with a certificate of her own (made once, kept in your login keychain) so macOS remembers her
+# Terminal and Accessibility permissions every time she's rebuilt. Without it, every rebuild would ask again.
+if ! security find-certificate -c "$CERT" >/dev/null 2>&1; then
+  T="$(mktemp -d)"
+  cat > "$T/cert.cnf" <<CNF
+[req]
+distinguished_name = dn
+x509_extensions = ext
+prompt = no
+[dn]
+CN = $CERT
+[ext]
+basicConstraints = critical,CA:false
+keyUsage = critical,digitalSignature
+extendedKeyUsage = critical,codeSigning
+CNF
+  openssl req -x509 -newkey rsa:2048 -nodes -keyout "$T/key.pem" -out "$T/cert.pem" -days 3650 -config "$T/cert.cnf" >/dev/null 2>&1
+  openssl pkcs12 -export -inkey "$T/key.pem" -in "$T/cert.pem" -name "$CERT" -out "$T/mochi.p12" -passout pass:mochi >/dev/null 2>&1
+  security import "$T/mochi.p12" -k "$HOME/Library/Keychains/login.keychain-db" -P mochi -T /usr/bin/codesign >/dev/null 2>&1 || true
+  rm -rf "$T"
+fi
+if security find-certificate -c "$CERT" >/dev/null 2>&1 && codesign --force --sign "$CERT" build/Mochi.app >/dev/null 2>&1; then
+  echo "  ✓ Signed (macOS will remember her permissions through future updates)"
+else
+  codesign --force --sign - build/Mochi.app >/dev/null 2>&1 || true
+fi
 pkill -x Mochi 2>/dev/null || true
 mkdir -p "$HOME/Applications" && rm -rf "$APP" && cp -R build/Mochi.app "$APP"
 echo "  ✓ Mochi is in ~/Applications"
@@ -109,7 +149,7 @@ import json, os, shutil, sys, time
 notify = sys.argv[1]; path = os.path.expanduser("~/.claude/settings.json")
 os.makedirs(os.path.dirname(path), exist_ok=True)
 s = json.load(open(path)) if os.path.exists(path) else {}
-if os.path.exists(path): shutil.copy(path, path + ".before-mochi-" + time.strftime("%Y%m%d-%H%M%S"))
+before = json.dumps(s, sort_keys=True)
 cmd = lambda flag: f'python3 "{notify}"{(" " + flag) if flag else ""} 2>/dev/null || true'
 want = [("Stop", None, ""), ("UserPromptSubmit", None, "--working"), ("PreToolUse", "AskUserQuestion", "--question"),
         ("PreToolUse", "*", "--doing"), ("PostToolUse", "AskUserQuestion", "--answered"), ("PostToolUse", "*", "--progress")]
@@ -122,11 +162,19 @@ for ev, matcher, flag in want:
     entry = {"hooks": [{"type": "command", "command": cmd(flag)}]}
     if matcher: entry["matcher"] = matcher
     arr.append(entry)
-json.dump(s, open(path, "w"), indent=2)
-print("  ✓ Connected to Claude Code (your old settings were backed up next to ~/.claude/settings.json)")
+if json.dumps(s, sort_keys=True) != before:   # only touch the file (and back it up) when something actually changed
+    if os.path.exists(path): shutil.copy(path, path + ".before-mochi-" + time.strftime("%Y%m%d-%H%M%S"))
+    json.dump(s, open(path, "w"), indent=2)
+    print("  ✓ Connected to Claude Code (your old settings were backed up next to ~/.claude/settings.json)")
 PY
 
+# teach Claude Code how to change Mochi: a skill that says where her code is and how to rebuild her safely
+SKILL="$HOME/.claude/skills/mochi"; mkdir -p "$SKILL"
+sed "s#{{REPO}}#$REPO#g; s#{{DATA}}#$DATA#g" claude-skill/SKILL.md > "$SKILL/SKILL.md"
+[ "$MODE" = "--rebuild" ] || echo "  ✓ Claude Code knows how to change Mochi now: just ask it (\"make Mochi wear a party hat\")"
+
 open "$APP"
+if [ "$MODE" = "--rebuild" ]; then echo "  🫧  Mochi's rebuilt and back."; exit 0; fi
 echo ""
 echo "  🫧  Mochi's here! Look for her at the bottom of your screen."
 echo ""
