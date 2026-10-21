@@ -17,6 +17,7 @@ She also breathes, blinks, follows your cursor, hops when you send something, ge
 - ❓ **Answers questions.** When Claude asks you to pick an option, pick it right from Mochi.
 - ✅ **To-do list.** Claude can add things you need to do yourself; Mochi reminds you.
 - 🎨 **Any color you like.** Pick one when you install, or right-click her → *Change Mochi's Color…*
+- 🔔 **Social notifications (optional).** Turn it on in the installer and she shows little badges for new Instagram, Threads, LinkedIn or X notifications. She reads the unread count from tabs you already have open in Chrome, like "(3) Instagram": no logins, nothing leaves your Mac. Click a badge to jump to that tab.
 
 ## Install
 
@@ -35,12 +36,13 @@ No git? Click the green **Code** button above → **Download ZIP**, unzip it, th
 The installer will:
 
 1. Ask **what color you want Mochi to be** 🎨
-2. Build her (takes about 30 seconds) and put her in `~/Applications`
-3. Connect her to Claude Code by adding a few hooks to `~/.claude/settings.json` (your old settings are backed up first)
+2. Ask if you want **social notifications**, and for which sites
+3. Build her (takes about 30 seconds) and put her in `~/Applications`
+4. Connect her to Claude Code by adding a few hooks to `~/.claude/settings.json` (your old settings are backed up first)
 
 ### Permissions
 
-The first time Mochi sends a message, macOS will ask to let her control **Terminal**: say OK. She also needs **Accessibility** to type into Terminal: *System Settings → Privacy & Security → Accessibility → turn on Mochi*.
+The first time Mochi sends a message, macOS will ask to let her control **Terminal**: say OK. If you turned on social notifications, it also asks about **Google Chrome**. She also needs **Accessibility** to type into Terminal: *System Settings → Privacy & Security → Accessibility → turn on Mochi*.
 
 ## Using her
 
