@@ -45,7 +45,7 @@ You need a Mac (macOS 13 or newer) and [Claude Code](https://docs.claude.com/en/
 Open **Terminal** and run:
 
 ```bash
-git clone https://github.com/jessawolfe/mochi.git
+git clone https://github.com/jessawolfe-ux/mochi.git
 cd mochi
 ./install.sh
 ```
