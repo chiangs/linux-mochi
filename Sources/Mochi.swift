@@ -748,7 +748,7 @@ final class Bar: NSObject, NSApplicationDelegate, NSTextFieldDelegate, NSWindowD
         lastMidX = panel.frame.midX
 
         // social notifications, only if you said yes in the installer: unread counts read from tabs already open in Chrome
-        if !enabledSocial().isEmpty {
+        if !enabledSocial().isEmpty || (ProcessInfo.processInfo.environment["PB_DEMO"] ?? "").contains("social") {
             checkSocial()
             Timer.scheduledTimer(withTimeInterval: 20, repeats: true) { [weak self] _ in self?.checkSocial() }
         }
@@ -844,7 +844,8 @@ final class Bar: NSObject, NSApplicationDelegate, NSTextFieldDelegate, NSWindowD
     // MARK: social notifications: read the titles of tabs already open in Chrome (no logins, nothing fetched)
     func checkSocial() {
         note("social check")
-        let r = run("""
+        let demoSocial = (ProcessInfo.processInfo.environment["PB_DEMO"] ?? "").contains("social")   // demo badges: never touches Chrome
+        let r = demoSocial ? (out: "", err: nil) : run("""
         if application "Google Chrome" is not running then return ""
         set out to ""
         set sep to character id 9   -- a real tab character (inside Chrome's tell block, "tab" means a browser tab)
