@@ -9,6 +9,8 @@ Mochi floats over everything on your Mac. Click her, type, and your message goes
 
 She also breathes, blinks, follows your cursor, hops when you send something, gets sleepy when it's quiet, and dresses for the time of day.
 
+<p align="center"><img src="assets/screens/02-reply.png" width="420" alt="Mochi showing a reply from Claude"></p>
+
 ## What she does
 
 - 💬 **Message Claude from anywhere.** No need to find the Terminal window.
@@ -19,6 +21,22 @@ She also breathes, blinks, follows your cursor, hops when you send something, ge
 - 🎨 **Any color you like.** Pick one when you install, or right-click her → *Change Mochi's Color…*
 - 🔔 **Social notifications (optional).** Turn it on in the installer and she shows little badges for new Instagram, Threads, LinkedIn or X notifications. She reads the unread count from tabs you already have open in Chrome, like "(3) Instagram": no logins, nothing leaves your Mac. Click a badge to jump to that tab.
   > **Keep those sites open in Chrome tabs.** Mochi can only see sites that have a tab open, so pin them (right-click the tab → *Pin*) and they'll always be there. The installer adds this to Mochi's to-do list as a reminder.
+
+### A few of her tricks
+
+| | |
+|---|---|
+| <img src="assets/screens/03-working.png" width="300" alt="Mochi showing what Claude is doing"> | **While Claude works:** what it's doing right now, plus a timer and token count. |
+| <img src="assets/screens/04-social.png" width="300" alt="Mochi with social badges"> | **Social badges:** new notifications from tabs open in Chrome. Click one to jump there. |
+| <img src="assets/screens/05-todo.png" width="300" alt="Mochi announcing a to-do"> | **To-dos:** things Claude needs *you* to do. |
+
+**Moods and outfits.** She gets petted, falls asleep when it's quiet, has coffee in the morning, wears sunglasses on Friday afternoons and a nightcap late at night:
+
+<p align="center"><img src="assets/screens/moods.png" width="640" alt="Mochi petted, sleepy, with coffee, in sunglasses and in a nightcap"></p>
+
+**Any color you like:**
+
+<p align="center"><img src="assets/screens/colors.png" width="640" alt="Mochi in sky blue, pink, mint, yellow and lavender"></p>
 
 ## Install
 
