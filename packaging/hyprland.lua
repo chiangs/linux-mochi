@@ -13,6 +13,6 @@ hl.on("hyprland.start", function()
     hl.exec_cmd("mochi")
 end)
 
--- a keyboard shortcut: Super+M opens her message bar, ready to type (pick any key you like)
-hl.bind("SUPER + M", hl.dsp.exec_cmd("mochi --message"))
--- hl.bind("SUPER + SHIFT + M", hl.dsp.exec_cmd("mochi --todo"))     -- her to-do list
+-- a keyboard shortcut: Super+Alt+M opens her message bar, ready to type (pick any key you like)
+hl.bind("SUPER + ALT + M", hl.dsp.exec_cmd("mochi --message"))
+-- hl.bind("SUPER + ALT + T", hl.dsp.exec_cmd("mochi --todo"))     -- her to-do list

@@ -110,16 +110,18 @@ Wayland apps can't grab keys for themselves, so give her one in your compositor.
 Hyprland 0.55+ (`hyprland.lua`):
 
 ```lua
-hl.bind("SUPER + M", hl.dsp.exec_cmd("mochi --message"))
+hl.bind("SUPER + ALT + M", hl.dsp.exec_cmd("mochi --message"))
 ```
 
 Hyprland 0.54 and older (`hyprland.conf`):
 
 ```
-bind = SUPER, M, exec, mochi --message
+bind = SUPER ALT, M, exec, mochi --message
 ```
 
-Sway: `bindsym $mod+m exec mochi --message`. Esc folds her back up and hands the keyboard back.
+Sway: `bindsym $mod+Mod1+m exec mochi --message`. Esc folds her back up and hands the keyboard back.
+
+Pick any free key: `hyprctl binds` lists what's taken. If your Hyprland config comes from a dotfiles project (Caelestia, end-4, ML4W, …), put your own binds where it says user additions go (Caelestia: `~/.config/caelestia/hypr-user.conf`), so updates don't overwrite them.
 
 ## Settings
 
