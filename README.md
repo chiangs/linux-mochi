@@ -83,7 +83,7 @@ Mochi finds every running `claude` and talks to the one whose terminal you used 
 | in **WezTerm** | `wezterm cli send-text` | Works out of the box. |
 | in **Alacritty**, foot, Ghostty, … | Focuses the window (Hyprland/Sway), pastes with `wtype`, presses Return, then puts you back where you were and restores your clipboard | Like the Mac version. Don't type during that half-second. |
 
-If no Claude is running, she opens your terminal with `claude --continue` (inside tmux, if you chose that) and sends your message once it's up.
+If no Claude is running, she opens your terminal with `claude --continue` (inside tmux, if you chose that) in the folder of your most recent Claude session, and sends your message once it's up. If Claude first asks whether to trust that folder, she waits for you to answer it in the terminal and then sends. Set `wake_dir` in `config.json` to always start somewhere specific.
 
 ## Using her
 

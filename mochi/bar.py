@@ -1012,12 +1012,37 @@ class Bar:
         self.deliver(s, t)
 
     def deliver(self, s, t):
+        # Claude is asking whether to trust its folder: typing now would answer that (Return = "No, exit"), so wait
+        if terminals.asking_trust(terminals.screen(s)):
+            self.wait_for_trust(s, t); return
         self.note(f"send via {self.sender.route(s)}")
         def done(err):
             if err: self.failed(err); return
             self.field.set_text("")
             self.celebrate_send()
         self.sender.send(s, t, done)
+
+    # show you the question, and send once you've answered it in the terminal
+    def wait_for_trust(self, s, t):
+        self.note("waiting for the trust prompt")
+        self.sender.focus(s)
+        self.goo.asking = True
+        self.show_bubble("Claude is asking whether to trust this folder. Answer it in your terminal "
+                         "and I'll send your message right after.", "waiting", react=False)
+        self.goo.worry()
+        tries = [0]
+        def check():
+            tries[0] += 1
+            if not s.alive():
+                self.goo.asking = False; self.sending = False; self.goo.worry(); self.flash("Claude exited", False); return
+            if terminals.asking_trust(terminals.screen(s)):
+                if tries[0] < 240: later(500, check)
+                else: self.goo.asking = False; self.sending = False; self.flash("still waiting: resend", False)
+                return
+            # answered: let Claude draw its prompt, then send
+            self.goo.asking = False; self.hide_bubble()
+            later(1500, lambda: self.deliver(s, t))
+        later(500, check)
 
     # no Claude running anywhere: open a terminal running `claude --continue`, wait for it, then send
     def wake(self, t):
@@ -1031,16 +1056,27 @@ class Bar:
             terminals.spawn(cmd)
         except OSError as e:
             self.field.set_editable(True); self.failed(str(e)); return
-        tries = [0]
+        tries, shown = [0], [None]
+
+        def up(s):
+            self.field.set_editable(True); self.status_text, self.status_color = STATUS_IDLE, white(0.6)
+            self.deliver(s, t)
+
+        def ready(s, n=0):
+            # wait until Claude's screen has settled (or it's asking about trust); routes that can't read the screen just wait a moment
+            txt = terminals.screen(s)
+            if txt is None:
+                later(3000, lambda: up(s)); return
+            if terminals.asking_trust(txt) or (n >= 3 and txt.strip() and txt == shown[0]) or n >= 30:
+                later(500, lambda: up(s)); return
+            shown[0] = txt
+            later(500, lambda: ready(s, n + 1))
+
         def check():
             tries[0] += 1
             new = [s for s in terminals.sessions() if s.pid not in before]
             if new:
-                # it's up: give it a moment to draw its prompt, then send
-                def go():
-                    self.field.set_editable(True); self.status_text, self.status_color = STATUS_IDLE, white(0.6)
-                    self.deliver(new[0], t)
-                later(3000, go)
+                ready(new[0])
             elif tries[0] < 40:
                 later(500, check)
             else:

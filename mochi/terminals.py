@@ -7,6 +7,7 @@
 #   paste    anything else            the compositor focuses the terminal window, wtype presses the paste shortcut
 #                                     and Return, then you're put back where you were (like the Mac version)
 # "send" in config.json can force one ("tmux", "kitty", "wezterm", "paste"); "auto" picks as above.
+import json
 import os
 import shlex
 import shutil
@@ -136,6 +137,56 @@ def tmux_clients(s):
     except (RuntimeError, OSError, subprocess.TimeoutExpired, KeyError):
         return []
     return [int(p) for p, sid in (ln.split() for ln in out.splitlines() if ln.count(" ") == 1) if sid == sess]
+
+
+# ---- what's on Claude's screen ----
+
+# Claude Code asks whether to trust a folder the first time it starts there. Anything typed then lands on that
+# question (and Return picks the highlighted "No, exit"), so Mochi waits for you to answer it instead.
+TRUST_MARKERS = ("trust this folder", "trust the files in this folder")
+
+
+def screen(s):
+    """the visible text of a session's terminal, where the route can read it (tmux, kitty, wezterm), else None"""
+    try:
+        if s.route == "tmux":
+            return _tmux(s, "capture-pane", "-p", "-t", s.env["TMUX_PANE"])
+        if s.route == "kitty":
+            r = subprocess.run(["kitten", "@", "--to", s.env["KITTY_LISTEN_ON"], "get-text", "--match", "id:" + s.env["KITTY_WINDOW_ID"]],
+                               capture_output=True, text=True, timeout=2)
+            return r.stdout if r.returncode == 0 else None
+        if s.route == "wezterm":
+            env = dict(os.environ)
+            if s.env.get("WEZTERM_UNIX_SOCKET"): env["WEZTERM_UNIX_SOCKET"] = s.env["WEZTERM_UNIX_SOCKET"]
+            r = subprocess.run(["wezterm", "cli", "get-text", "--pane-id", s.env["WEZTERM_PANE"]], capture_output=True, text=True, timeout=2, env=env)
+            return r.stdout if r.returncode == 0 else None
+    except (RuntimeError, OSError, subprocess.TimeoutExpired, KeyError):
+        return None
+    return None
+
+
+def asking_trust(text):
+    t = (text or "").lower()
+    return any(m in t for m in TRUST_MARKERS)
+
+
+def last_dir():
+    """the folder of the most recent Claude session the hooks told Mochi about (likely one you already trust)"""
+    best = (0, None)
+    for f in (paths.WORKING, paths.LAST):
+        try:
+            j = json.loads(f.read_text())
+        except (OSError, ValueError):
+            continue
+        if isinstance(j, dict) and j.get("cwd") and os.path.isdir(j["cwd"]) and j.get("time", 0) > best[0]:
+            best = (j["time"], j["cwd"])
+    return best[1]
+
+
+def wake_dir(cfg):
+    d = cfg.get("wake_dir") or "last"
+    if d == "last": return last_dir() or str(Path.home())
+    return os.path.expanduser(d)
 
 
 # ---- the paste route: wl-clipboard + wtype ----
@@ -353,7 +404,7 @@ def wake_command(cfg):
         return list(cfg["wake_command"]) if isinstance(cfg["wake_command"], list) else shlex.split(cfg["wake_command"])
     term = find_terminal(cfg.get("terminal", "auto"))
     if not term: return None
-    d = os.path.expanduser(cfg.get("wake_dir") or "~")
+    d = wake_dir(cfg)
     inner = [find_claude(), "--continue"]
     if cfg.get("wake_in_tmux", True) and shutil.which("tmux"):
         inner = ["tmux", "new-session", "-s", f"claude-{int(time.time()) % 100000}", "-c", d, shlex.join(inner)]

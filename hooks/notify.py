@@ -143,7 +143,7 @@ d = json.load(sys.stdin)
 project = os.path.basename(d.get("cwd", "").rstrip("/"))
 
 if "--working" in sys.argv:
-    write("working.json", {"project": project, "time": time.time()})
+    write("working.json", {"project": project, "cwd": d.get("cwd", ""), "time": time.time()})
     try:
         os.remove(os.path.join(DIR, "progress.json"))
     except OSError:
@@ -203,4 +203,4 @@ for f in ("question.json", "progress.json"):
 full = last_reply(d)
 s = summarize(full)
 if s:
-    write("last.json", {"text": s, "full": clean(full), "project": project, "time": time.time()})
+    write("last.json", {"text": s, "full": clean(full), "project": project, "cwd": d.get("cwd", ""), "time": time.time()})

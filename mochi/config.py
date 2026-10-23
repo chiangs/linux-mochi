@@ -11,7 +11,7 @@ DEFAULTS = {
     # the terminal Mochi opens when no Claude is running: "auto" tries $TERMINAL, alacritty, kitty, wezterm, foot, ghostty
     "terminal": "auto",
     "wake_in_tmux": True,         # start that new Claude inside tmux (the most reliable way for Mochi to reach it)
-    "wake_dir": "~",
+    "wake_dir": "last",           # where that new Claude starts: "last" = the folder of your most recent Claude session, or a path
     "wake_command": [],           # or spell out the whole command, e.g. ["alacritty", "-e", "claude", "--continue"]
     "paste_keys": "ctrl+shift+v",  # the terminal's paste shortcut, for the paste route
     "font": "sans-serif",

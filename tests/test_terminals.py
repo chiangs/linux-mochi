@@ -68,3 +68,24 @@ def test_tmux_route(tmp_path):
     finally:
         subprocess.run(["tmux", "-S", sock, "kill-server"], capture_output=True)
         if os.path.exists(sock): os.unlink(sock)
+
+
+def test_asking_trust():
+    assert terminals.asking_trust("Quick safety check: …\n❯ No, exit\n  Yes, I trust this folder")
+    assert terminals.asking_trust("Do you trust the files in this folder?")
+    assert not terminals.asking_trust("> make Mochi purple")
+    assert not terminals.asking_trust(None)
+
+
+def test_wake_dir_follows_last_session(data_home, monkeypatch, tmp_path):
+    import json
+    import time as t
+    from mochi import paths
+    monkeypatch.setattr(paths, "WORKING", data_home / "working.json")
+    monkeypatch.setattr(paths, "LAST", data_home / "last.json")
+    data_home.mkdir(parents=True, exist_ok=True)
+    proj = tmp_path / "proj"; proj.mkdir()
+    (data_home / "last.json").write_text(json.dumps({"cwd": str(proj), "time": t.time()}))
+    (data_home / "working.json").write_text(json.dumps({"cwd": "/no/such/dir", "time": t.time() + 5}))
+    assert terminals.wake_dir({"wake_dir": "last"}) == str(proj)       # newest folder that still exists
+    assert terminals.wake_dir({"wake_dir": "~/code"}).endswith("/code")
