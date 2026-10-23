@@ -15,7 +15,22 @@ def preload_layer_shell():
     return False
 
 
+USAGE = """usage: mochi [option]
+
+Starts Mochi. When she's already running, the option goes to her (handy for keybindings):
+  (none)      bring her to you and say hi
+  --message   open her message bar, ready to type
+  --toggle    open her message bar, or fold it if it's open
+  --todo      show or hide her to-do list
+  --hide      hide her (--message or no option brings her back)
+  --quit      quit her
+
+  mochi setup [--remove]   connect her to Claude Code (or disconnect)"""
+
+
 def main():
+    if "--help" in sys.argv or "-h" in sys.argv:
+        print(USAGE); return 0
     if "--version" in sys.argv:
         from . import __version__
         print(__version__); return 0
@@ -38,21 +53,28 @@ def main():
         print(f"mochi: {msg}; running as a normal window instead.", file=sys.stderr)
         paths.log("no layer-shell: " + msg)
 
-    app = Gtk.Application(application_id="io.github.chiangs.Mochi", flags=getattr(Gio.ApplicationFlags, "DEFAULT_FLAGS", Gio.ApplicationFlags.FLAGS_NONE))
+    # one Mochi at a time: running `mochi` again hands its options to the one that's running
+    app = Gtk.Application(application_id="io.github.chiangs.Mochi", flags=Gio.ApplicationFlags.HANDLES_COMMAND_LINE)
     state = {}
 
-    def activate(a):
-        if "bar" in state:
-            state["bar"].find_mochi(); return
-        from .bar import Bar
-        bar = Bar(a)
-        bar.install_actions()
-        state["bar"] = bar
-        a.hold()     # stay alive while hidden
+    def command_line(a, cmdline):
+        args = cmdline.get_arguments()[1:]
+        if "bar" not in state:
+            if "--quit" in args or "--hide" in args: a.quit(); return 0     # nothing running to quit or hide
+            from .bar import Bar
+            bar = Bar(a)
+            bar.install_actions()
+            state["bar"] = bar
+            a.hold()     # stay alive while hidden
+            if any(x in args for x in ("--message", "--todo", "--toggle")):
+                GLib.timeout_add(300, lambda: (bar.command(args), False)[1])
+            return 0
+        state["bar"].command(args)
+        return 0
 
-    app.connect("activate", activate)
+    app.connect("command-line", command_line)
     GLib.set_application_name("Mochi")
-    return app.run([sys.argv[0]])
+    return app.run(sys.argv)
 
 
 if __name__ == "__main__":

@@ -68,7 +68,7 @@ To blur behind her glass and start her with Hyprland, paste one of these into yo
 - **Hyprland 0.55+** (`hyprland.lua`): [`packaging/hyprland.lua`](packaging/hyprland.lua)
 - **Hyprland 0.54 and older** (`hyprland.conf`): [`packaging/hyprland.conf`](packaging/hyprland.conf)
 
-With blur on, set `"glass_alpha": 0.7` in `~/.local/share/mochi/config.json` so it shows through.
+With blur on, set `"glass_alpha": 0.7` in `~/.config/mochi/config.json` so it shows through.
 
 "Open at Login" in her menu writes an XDG autostart entry. Hyprland only runs those if you use something like **uwsm** or **dex**, so the snippet's autostart line is the sure way.
 
@@ -83,7 +83,7 @@ Mochi finds every running `claude` and talks to the one whose terminal you used 
 | in **WezTerm** | `wezterm cli send-text` | Works out of the box. |
 | in **Alacritty**, foot, Ghostty, … | Focuses the window (Hyprland/Sway), pastes with `wtype`, presses Return, then puts you back where you were and restores your clipboard | Like the Mac version. Don't type during that half-second. |
 
-If no Claude is running, she opens your terminal with `claude --continue` (inside tmux, if you chose that) in the folder of your most recent Claude session, and sends your message once it's up. If Claude first asks whether to trust that folder, she waits for you to answer it in the terminal and then sends. Set `wake_dir` in `config.json` to always start somewhere specific.
+If no Claude is running, she opens your terminal with `claude --continue` (inside tmux, if you chose that) in the folder of your most recent Claude session, and sends your message once it's up. If Claude first asks whether to trust that folder, she waits for you to answer it in the terminal and then sends. Set `wake_dir` in her [settings](#settings) to always start somewhere specific. A terminal she opened closes again once your message is in (Claude keeps running in tmux; `tmux attach` brings it back).
 
 ## Using her
 
@@ -94,6 +94,64 @@ If no Claude is running, she opens your terminal with `claude --continue` (insid
 | **Right-click** | Her menu: open at login, color, quit |
 | **Hover** | She'll wiggle. Keep hovering and she gets petted 💗 |
 | **Tray icon** | Find Mochi, message her, to-do list, show/hide (Waybar's `tray` module, KDE, …) |
+
+### Keyboard shortcut
+
+Wayland apps can't grab keys for themselves, so give her one in your compositor. Running `mochi` with an option talks to the Mochi that's already running:
+
+| Command | What it does |
+|---|---|
+| `mochi --message` | open her message bar, ready to type |
+| `mochi --toggle` | open her message bar, or fold it if it's open |
+| `mochi --todo` | show or hide her to-do list |
+| `mochi --hide` | hide her (`mochi` brings her back) |
+| `mochi --quit` | quit her |
+
+Hyprland 0.55+ (`hyprland.lua`):
+
+```lua
+hl.bind("SUPER + M", hl.dsp.exec_cmd("mochi --message"))
+```
+
+Hyprland 0.54 and older (`hyprland.conf`):
+
+```
+bind = SUPER, M, exec, mochi --message
+```
+
+Sway: `bindsym $mod+m exec mochi --message`. Esc folds her back up and hands the keyboard back.
+
+## Settings
+
+Her settings live in **`~/.config/mochi/config.json`**. The installer writes the first few; add any of the others you want to change. Anything left out uses its default. Restart her after editing (`mochi --quit; mochi`).
+
+```json
+{
+  "color": "#ff8fc2",
+  "terminal": "alacritty",
+  "wake_in_tmux": true,
+  "wake_dir": "~/claude",
+  "glass_alpha": 0.7
+}
+```
+
+| Setting | Default | What it does |
+|---|---|---|
+| `color` | `"#33c7ff"` | Her body color (edge and shine are worked out from it). Also changeable from her right-click menu. |
+| `send` | `"auto"` | How messages reach Claude: `"auto"` picks per session (tmux → kitty → WezTerm → paste). Force one with `"tmux"`, `"kitty"`, `"wezterm"` or `"paste"`. |
+| `terminal` | `"auto"` | The terminal she opens when no Claude is running. `"auto"` tries `$TERMINAL`, then alacritty, kitty, wezterm, foot, ghostty. |
+| `wake_in_tmux` | `true` | Start that new Claude inside tmux (so she can reach it without touching your focus or clipboard). |
+| `wake_dir` | `"last"` | Where that new Claude starts. `"last"` = the folder of your most recent Claude session (or your home folder if there's none), or any path like `"~/claude"`. |
+| `wake_command` | `[]` | Replace the whole "open a terminal with Claude" command, e.g. `["alacritty", "-e", "claude"]`. |
+| `close_opened_window` | `true` | Close a terminal she opened (to start Claude, or to show you its trust question) once your message is in. Claude keeps running in tmux. tmux only. |
+| `paste_keys` | `"ctrl+shift+v"` | Your terminal's paste shortcut, for the paste route (no tmux). |
+| `glass_alpha` | `0.86` | How dark her glass is, 0–1. Lower it (e.g. `0.7`) if your compositor blurs behind her. |
+| `font` / `mono_font` | `"sans-serif"` / `"monospace"` | Fonts for her text and her little labels. |
+| `bottom_margin` | `18` | Distance from the bottom of the screen (above any bar), in pixels. |
+| `monitor` | `""` | Which output to live on, by connector name like `"DP-1"` (`hyprctl monitors` lists them). Empty = the focused one at launch. |
+| `social` | `[]` | Social badge sites (`"ig"`, `"th"`, `"li"`, `"x"`), for when a source plug-in exists. |
+
+Other files, for reference: hook output, to-dos and hooks are in `~/.local/share/mochi/`, her log is `~/.local/state/mochi/mochi.log`.
 
 ## Ask Claude to change her
 
@@ -116,7 +174,7 @@ Mochi is a small Python package, so she's easy to remix:
 | [`mochi/bar.py`](mochi/bar.py) | The pill, reply bubble, questions, to-do list, menus, sending |
 | [`mochi/terminals.py`](mochi/terminals.py) | Finding Claude sessions and typing into them |
 | [`mochi/compositor.py`](mochi/compositor.py) | Hyprland / Sway specifics |
-| [`mochi/config.py`](mochi/config.py) | Every setting and its default (`~/.local/share/mochi/config.json`) |
+| [`mochi/config.py`](mochi/config.py) | Every setting and its default (see [Settings](#settings)) |
 | [`hooks/notify.py`](hooks/notify.py) | The Claude Code hook that tells Mochi what Claude is doing (writes JSON files she watches) |
 
 Change anything, then `./install.sh --rebuild`. To try looks without waiting: `PB_HOUR=8 mochi`, `PB_WEEKDAY=6 PB_HOUR=14 mochi`, `PB_MOOD=sleepy mochi` (also `pet`, `proud`, `worried`), `PB_DEMO=send mochi`.

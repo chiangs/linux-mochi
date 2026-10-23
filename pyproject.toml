@@ -1,6 +1,6 @@
 [project]
 name = "mochi"
-version = "1.0.0"
+version = "1.1.0"
 description = "A tiny pixel goo who lives at the bottom of your screen and talks to Claude Code for you (Linux / Wayland)"
 license = { text = "MIT" }
 requires-python = ">=3.11"

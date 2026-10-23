@@ -492,7 +492,23 @@ class Bar:
 
     def message_mochi(self):
         if not self.panel.get_visible(): self.find_mochi()
-        self.set_open(True, grab=True)
+        if self.open:
+            # already open: just take the keyboard
+            self.panel.keyboard("exclusive"); self.panel.present(); self.field.grab_focus()
+            later(400, lambda: self.open and self.panel.keyboard("on_demand"))
+        else:
+            self.set_open(True, grab=True)
+
+    def command(self, args):
+        """mochi --message | --toggle | --todo | --find | --quit, sent to the running Mochi (for keybindings)"""
+        if "--message" in args: self.message_mochi()
+        elif "--toggle" in args:
+            if self.open: self.field.set_text(""); self.set_open(False)
+            else: self.message_mochi()
+        elif "--todo" in args: self.toggle_todo_list() if self.panel.get_visible() else self.open_todo_from_menu()
+        elif "--hide" in args: self.toggle_shown() if self.panel.get_visible() else None
+        elif "--quit" in args: self.app.quit()
+        else: self.find_mochi()
 
     def open_todo_from_menu(self):
         if not self.panel.get_visible(): self.find_mochi()
@@ -1020,6 +1036,8 @@ class Bar:
             if err: self.failed(err); return
             self.field.set_text("")
             self.celebrate_send()
+            # a terminal Mochi opened has done its job: close it (Claude keeps running in tmux)
+            if self.cfg.get("close_opened_window", True): later(1500, lambda: terminals.close_opened(s))
         self.sender.send(s, t, done)
 
     # show you the question, and send once you've answered it in the terminal

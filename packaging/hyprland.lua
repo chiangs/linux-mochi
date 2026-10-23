@@ -1,6 +1,6 @@
 -- Mochi on Hyprland 0.55+ (Lua config): paste into ~/.config/hypr/hyprland.lua
 
--- frosted glass behind her pill and pop-ups (then set "glass_alpha": 0.7 in ~/.local/share/mochi/config.json)
+-- frosted glass behind her pill and pop-ups (then set "glass_alpha": 0.7 in ~/.config/mochi/config.json)
 hl.layer_rule({
     name  = "mochi-blur",
     match = { namespace = "^mochi$" },
@@ -12,3 +12,7 @@ hl.layer_rule({
 hl.on("hyprland.start", function()
     hl.exec_cmd("mochi")
 end)
+
+-- a keyboard shortcut: Super+M opens her message bar, ready to type (pick any key you like)
+hl.bind("SUPER + M", hl.dsp.exec_cmd("mochi --message"))
+-- hl.bind("SUPER + SHIFT + M", hl.dsp.exec_cmd("mochi --todo"))     -- her to-do list

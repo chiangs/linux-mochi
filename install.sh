@@ -11,6 +11,7 @@ set -e
 cd "$(dirname "$0")"
 REPO="$PWD"
 DATA="${XDG_DATA_HOME:-$HOME/.local/share}/mochi"
+CONF="${XDG_CONFIG_HOME:-$HOME/.config}/mochi"
 APPDIR="$DATA/app"
 BIN="$HOME/.local/bin"
 MODE=""; YES=""
@@ -21,7 +22,9 @@ ask() { if [ -n "$YES" ]; then REPLY="$2"; else read -r -p "$1" REPLY; REPLY="${
 if [ "$MODE" = "--update" ]; then
   echo "  Getting the newest Mochi…"; git pull --ff-only; MODE="--rebuild"
 fi
-if [ "$MODE" = "--rebuild" ] && [ ! -f "$DATA/config.json" ]; then MODE=""; fi   # never set up yet: ask the questions
+# settings moved from ~/.local/share/mochi to ~/.config/mochi
+if [ -f "$DATA/config.json" ] && [ ! -f "$CONF/config.json" ]; then mkdir -p "$CONF" && mv "$DATA/config.json" "$CONF/config.json"; fi
+if [ "$MODE" = "--rebuild" ] && [ ! -f "$CONF/config.json" ]; then MODE=""; fi   # never set up yet: ask the questions
 
 # --- what she needs ---
 PKGS="python python-gobject python-cairo gtk4 gtk4-layer-shell wl-clipboard wtype tmux"
@@ -85,8 +88,8 @@ echo "  When no Claude is running, Mochi opens one in: ${TERM_GUESS:-(no termina
 ask "  Use that terminal? Or type another (like kitty) [${TERM_GUESS:-alacritty}]: " "${TERM_GUESS:-alacritty}"; TERM_PICK="$REPLY"
 echo ""
 
-mkdir -p "$DATA"
-python3 - "$DATA/config.json" "$HEX" "$TERM_PICK" "$TMUX_WAKE" <<'PY'
+mkdir -p "$DATA" "$CONF"
+python3 - "$CONF/config.json" "$HEX" "$TERM_PICK" "$TMUX_WAKE" <<'PY'
 import json, sys
 path, color, term, tmux = sys.argv[1:]
 try: c = json.load(open(path))
@@ -127,7 +130,7 @@ MOCHI_REPO="$REPO" PYTHONPATH="$APPDIR" python3 -m mochi setup
 [ "$MODE" = "--rebuild" ] || echo "  ✓ Claude Code knows how to change Mochi now: just ask it (\"make Mochi wear a party hat\")"
 
 # --- 5. (re)start her ---
-pkill -f "python3 -m mochi$" 2>/dev/null || true
+pkill -f "python3 -m mochi( --|$)" 2>/dev/null || true
 sleep 0.3
 if [ -n "$WAYLAND_DISPLAY" ]; then
   setsid -f "$BIN/mochi" >/dev/null 2>&1 < /dev/null
@@ -142,7 +145,8 @@ if [ "$TMUX_WAKE" = "true" ]; then
 echo "  • Start Claude inside tmux so Mochi can reach it:  tmux new -A -s claude claude"
 echo "    (or just message her with no Claude running and she opens one for you)"
 fi
-echo "  • Right-click her for her menu (color, open at login, quit)."
+echo "  • Right-click her for her menu (color, open at login, quit). Settings: ~/.config/mochi/config.json"
+echo "  • Give her a keyboard shortcut: bind a key to  mochi --message  (see the README)."
 if [ -n "$HYPRLAND_INSTANCE_SIGNATURE" ] || command -v Hyprland >/dev/null; then
   echo "  • On Hyprland, to start her with Hyprland and blur behind her glass, add the snippet from"
   if [ -f "$HOME/.config/hypr/hyprland.lua" ]; then echo "      $REPO/packaging/hyprland.lua"; else echo "      $REPO/packaging/hyprland.conf"; fi

@@ -2,7 +2,7 @@
 # Mochi for Arch Linux. Build from the repo root:  cd packaging && makepkg -si
 # (for the AUR, point source=() at a release tarball instead of the local checkout)
 pkgname=mochi-claude
-pkgver=1.0.0
+pkgver=1.1.0
 pkgrel=1
 pkgdesc="A tiny pixel goo who floats at the bottom of your screen and talks to Claude Code for you (Wayland)"
 arch=('any')

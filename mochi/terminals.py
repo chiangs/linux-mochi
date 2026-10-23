@@ -445,7 +445,30 @@ def wake_command(cfg):
     return terminal_command(cfg, inner, d)
 
 
+OPENED = set()   # pids of terminals Mochi opened herself
+
+
+def close_opened(s):
+    """close the terminal windows Mochi opened onto this session, by detaching their tmux clients (Claude keeps running)"""
+    if s.route != "tmux" or not OPENED: return
+    try:
+        sess = _tmux(s, "display-message", "-p", "-t", s.env["TMUX_PANE"], "#{session_id}").strip()
+        out = _tmux(s, "list-clients", "-F", "#{client_pid}\t#{client_tty}\t#{session_id}")
+    except (RuntimeError, OSError, subprocess.TimeoutExpired, KeyError):
+        return
+    for line in out.splitlines():
+        parts = line.split("\t")
+        if len(parts) != 3 or parts[2] != sess or not parts[0].isdigit(): continue
+        if OPENED & {p for p, _ in ancestors(int(parts[0]))}:
+            try:
+                _tmux(s, "detach-client", "-t", parts[1])
+            except (RuntimeError, OSError, subprocess.TimeoutExpired):
+                pass
+
+
 def spawn(cmd):
-    paths.log("wake: " + shlex.join(cmd))
-    return subprocess.Popen(cmd, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+    paths.log("open: " + shlex.join(cmd))
+    p = subprocess.Popen(cmd, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
                             start_new_session=True, cwd=str(Path.home()))
+    OPENED.add(p.pid)
+    return p

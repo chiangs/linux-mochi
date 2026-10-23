@@ -71,7 +71,7 @@ def install_skill(template, repo, hooks_dir):
     SKILL_DIR.mkdir(parents=True, exist_ok=True)
     t = Path(template).read_text()
     t = t.replace("{{REPO}}", str(repo) if repo else "(Mochi was installed from a package: clone https://github.com/chiangs/linux-mochi to change her)")
-    t = t.replace("{{DATA}}", str(paths.DATA)).replace("{{HOOKS}}", str(hooks_dir)).replace("{{LOG}}", str(paths.LOG))
+    t = t.replace("{{DATA}}", str(paths.DATA)).replace("{{CONFIG}}", str(paths.CONFIG)).replace("{{HOOKS}}", str(hooks_dir)).replace("{{LOG}}", str(paths.LOG))
     (SKILL_DIR / "SKILL.md").write_text(t)
 
 

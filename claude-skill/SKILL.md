@@ -17,7 +17,7 @@ Mochi is a small Python/GTK4 app: a pixel goo that floats at the bottom of the s
   - `compositor.py`: Hyprland / Sway specifics (cursor position, focusing windows)
   - `config.py`: every setting and its default
 - **The installer / rebuilder:** `{{REPO}}/install.sh`
-- **Her settings:** `{{DATA}}/config.json`, e.g. `{"color": "#33c7ff", "terminal": "alacritty", "wake_in_tmux": true}`. All keys and defaults are in `mochi/config.py`.
+- **Her settings:** `{{CONFIG}}`, e.g. `{"color": "#33c7ff", "terminal": "alacritty", "wake_in_tmux": true}`. All keys and defaults are in `mochi/config.py`, and described in the README's "Settings" section.
 - **What Claude Code tells her:** the hooks in `~/.claude/settings.json` run `{{HOOKS}}/notify.py`, which writes `last.json`, `working.json`, `doing.json`, `progress.json` and `question.json` into `{{DATA}}`. She checks those files every 0.7 s.
 - **Her log:** `{{LOG}}`
 - **The macOS original** is kept for reference in `{{REPO}}/macos/`.
@@ -36,7 +36,7 @@ Mochi is a small Python/GTK4 app: a pixel goo that floats at the bottom of the s
 
 To try a look without waiting for the right moment: `PB_HOUR=8 mochi` (morning coffee), `PB_WEEKDAY=6 PB_HOUR=14 mochi` (Friday sunglasses), `PB_MOOD=sleepy|pet|proud|worried mochi`, `PB_DEMO=send mochi` (the send animation, nothing sent), `PB_DEMO=social mochi` (sample badges). Quit the running Mochi first (right-click → Quit).
 
-Small things don't need code: to change her color, edit `color` in `config.json` (or right-click her → color), then restart her.
+Small things don't need code: to change her color, edit `color` in `{{CONFIG}}` (or right-click her → color), then restart her (`mochi --quit; mochi`).
 
 ## Her to-do list
 
