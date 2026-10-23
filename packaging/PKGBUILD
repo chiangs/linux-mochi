@@ -1,0 +1,34 @@
+# Maintainer: chiangs <https://github.com/chiangs>
+# Mochi for Arch Linux. Build from the repo root:  cd packaging && makepkg -si
+# (for the AUR, point source=() at a release tarball instead of the local checkout)
+pkgname=mochi-claude
+pkgver=1.0.0
+pkgrel=1
+pkgdesc="A tiny pixel goo who floats at the bottom of your screen and talks to Claude Code for you (Wayland)"
+arch=('any')
+url="https://github.com/chiangs/linux-mochi"
+license=('MIT')
+depends=('python' 'python-gobject' 'python-cairo' 'gtk4' 'gtk4-layer-shell')
+optdepends=('tmux: the most reliable way for Mochi to reach Claude'
+            'wtype: type into terminals without tmux'
+            'wl-clipboard: paste into terminals without tmux'
+            'hyprland: eyes that follow the cursor everywhere, and focusing terminal windows')
+install=mochi.install
+source=()
+
+package() {
+  local root="$startdir/.."
+  install -d "$pkgdir/usr/lib/mochi" "$pkgdir/usr/share/mochi/hooks"
+  cp -r "$root/mochi" "$pkgdir/usr/lib/mochi/"
+  find "$pkgdir/usr/lib/mochi" -name __pycache__ -prune -exec rm -rf {} +
+  install -m644 "$root/hooks/notify.py" "$root/hooks/todo.py" "$pkgdir/usr/share/mochi/hooks/"
+  install -m644 "$root/claude-skill/SKILL.md" "$pkgdir/usr/share/mochi/SKILL.md"
+  install -m644 "$root/packaging/hyprland.lua" "$root/packaging/hyprland.conf" "$pkgdir/usr/share/mochi/"
+  install -Dm755 /dev/stdin "$pkgdir/usr/bin/mochi" <<'SH'
+#!/bin/sh
+exec env PYTHONPATH="/usr/lib/mochi${PYTHONPATH:+:$PYTHONPATH}" python3 -m mochi "$@"
+SH
+  install -Dm644 "$root/packaging/mochi.desktop" "$pkgdir/usr/share/applications/mochi.desktop"
+  install -Dm644 "$root/assets/icon.png" "$pkgdir/usr/share/pixmaps/mochi.png"
+  install -Dm644 "$root/LICENSE" "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+}

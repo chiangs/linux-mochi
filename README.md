@@ -1,78 +1,99 @@
 <p align="center"><img src="assets/icon.png" width="160" alt="Mochi"></p>
 
-<h1 align="center">Mochi</h1>
-<p align="center"><b>A tiny pixel goo who lives at the bottom of your screen and talks to Claude Code for you.</b></p>
+<h1 align="center">Mochi for Linux</h1>
+<p align="center"><b>A tiny pixel goo who lives at the bottom of your screen and talks to Claude Code for you.</b><br>
+A Wayland port of <a href="https://github.com/jessawolfe-ux/mochi">Mochi</a> by <a href="https://jessa.art">Jessa Wolfe</a>, made for Arch / CachyOS + Hyprland.</p>
 
 ---
 
-Mochi floats over everything on your Mac. Click her, type, and your message goes straight to **Claude Code** running in Terminal. When Claude answers, she pops the reply up in a little bubble. She shows what Claude is doing while it works, answers its multiple-choice questions for you, and keeps a tiny to-do list of things Claude needs *you* to do.
+Mochi floats over everything on your desktop. Click her, type, and your message goes straight to **Claude Code** running in your terminal. When Claude answers, she pops the reply up in a little bubble. She shows what Claude is doing while it works, answers its multiple-choice questions for you, and keeps a tiny to-do list of things Claude needs *you* to do.
 
 She also breathes, blinks, follows your cursor, hops when you send something, gets sleepy when it's quiet, and dresses for the time of day.
 
-<p align="center"><img src="assets/screens/02-reply.png" width="420" alt="Mochi showing a reply from Claude"></p>
+<p align="center"><img src="assets/linux/reply.png" width="420" alt="Mochi showing a reply from Claude"></p>
 
 ## What she does
 
-- 💬 **Message Claude from anywhere.** No need to find the Terminal window.
-- 🫧 **Reply bubbles.** A short summary of Claude's answer pops up above her; long replies page with the arrow keys.
+- 💬 **Message Claude from anywhere.** No need to find the terminal window.
+- 🫧 **Reply bubbles.** A short summary of Claude's answer pops up above her; long replies come in pages (arrows, or ← → while she's open).
 - 👀 **Live progress.** A one-line "doing…" status and a little time/token meter while Claude works.
 - ❓ **Answers questions.** When Claude asks you to pick an option, pick it right from Mochi.
 - ✅ **To-do list.** Claude can add things you need to do yourself; Mochi reminds you.
-- 🎨 **Any color you like.** Pick one when you install, or right-click her → *Change Mochi's Color…*
-- 🔔 **Social notifications (optional).** Turn it on in the installer and she shows little badges for new Instagram, Threads, LinkedIn or X notifications. She reads the unread count from tabs you already have open in Chrome, like "(3) Instagram": no logins, nothing leaves your Mac. Click a badge to jump to that tab.
-  > **Keep those sites open in Chrome tabs.** Mochi can only see sites that have a tab open, so pin them (right-click the tab → *Pin*) and they'll always be there. The installer adds this to Mochi's to-do list as a reminder.
-
-### A few of her tricks
+- 🎨 **Any color you like.** Pick one when you install, or right-click her.
 
 | | |
 |---|---|
-| <img src="assets/screens/03-working.png" width="300" alt="Mochi showing what Claude is doing"> | **While Claude works:** what it's doing right now, plus a timer and token count. |
-| <img src="assets/screens/04-social.png" width="300" alt="Mochi with social badges"> | **Social badges:** new notifications from tabs open in Chrome. Click one to jump there. |
-| <img src="assets/screens/05-todo.png" width="300" alt="Mochi announcing a to-do"> | **To-dos:** things Claude needs *you* to do. |
+| <img src="assets/linux/working.png" width="300" alt="Mochi showing what Claude is doing"> | **While Claude works:** what it's doing right now, plus a timer and token count. |
+| <img src="assets/linux/question.png" width="300" alt="Mochi showing a question from Claude"> | **Questions:** click an option and she answers in your terminal. |
+| <img src="assets/linux/todo.png" width="300" alt="Mochi's to-do list"> | **To-dos:** things Claude needs *you* to do. Tell her `todo: buy matcha`, `what's on my list`, `done 1`. |
 
 **Moods and outfits.** She gets petted, falls asleep when it's quiet, has coffee in the morning, wears sunglasses on Friday afternoons and a nightcap late at night:
 
 <p align="center"><img src="assets/screens/moods.png" width="640" alt="Mochi petted, sleepy, with coffee, in sunglasses and in a nightcap"></p>
 
-**Any color you like:**
+## What you need
 
-<p align="center"><img src="assets/screens/colors.png" width="640" alt="Mochi in sky blue, pink, mint, yellow and lavender"></p>
+- **Arch Linux or an Arch-based distro** (CachyOS, EndeavourOS, …). The installer uses pacman.
+- **A Wayland compositor with layer-shell**:
+
+  | Compositor | Floats over windows | Eyes follow cursor | Typing into a plain terminal window | Blur |
+  |---|---|---|---|---|
+  | **Hyprland** | ✅ | ✅ everywhere | ✅ | ✅ (snippet below) |
+  | Sway | ✅ | near Mochi | ✅ | – |
+  | KDE Plasma, niri, river, … | ✅ | near Mochi | use tmux / kitty / WezTerm | KDE: ✅ |
+  | GNOME | ❌ (no layer-shell): ordinary window | near Mochi | use tmux / kitty / WezTerm | – |
+
+- **[Claude Code](https://docs.claude.com/en/docs/claude-code)** installed.
 
 ## Install
 
-You need a Mac (macOS 13 or newer) and [Claude Code](https://docs.claude.com/en/docs/claude-code) installed.
-
-Open **Terminal** and run:
-
 ```bash
-git clone https://github.com/jessawolfe-ux/mochi.git
-cd mochi
+git clone https://github.com/chiangs/linux-mochi.git
+cd linux-mochi
 ./install.sh
 ```
 
-No git? Click the green **Code** button above → **Download ZIP**, unzip it, then in Terminal `cd` into the folder and run `./install.sh`.
-
 The installer will:
 
-1. Ask **what color you want Mochi to be** 🎨
-2. Ask if you want **social notifications**, and for which sites
-3. Build her (takes about 30 seconds) and put her in `~/Applications`
-4. Connect her to Claude Code by adding a few hooks to `~/.claude/settings.json` (your old settings are backed up first)
+1. Install what she needs, after asking: `python-gobject python-cairo gtk4 gtk4-layer-shell wl-clipboard wtype tmux`
+2. Ask **what color you want Mochi to be** 🎨
+3. Ask **how she should reach Claude** (tmux, or straight into your terminal window) and which terminal to open when none is running
+4. Put her in `~/.local` (run her with `mochi`), with a desktop entry and icon
+5. Connect her to Claude Code by adding a few hooks to `~/.claude/settings.json` (your old settings are backed up first)
 
-### Permissions
+### Hyprland
 
-The first time Mochi sends a message, macOS will ask to let her control **Terminal**: say OK. If you turned on social notifications, it also asks about **Google Chrome**. She also needs **Accessibility** to type into Terminal: *System Settings → Privacy & Security → Accessibility → turn on Mochi*.
+To blur behind her glass and start her with Hyprland, paste one of these into your config:
+
+- **Hyprland 0.55+** (`hyprland.lua`): [`packaging/hyprland.lua`](packaging/hyprland.lua)
+- **Hyprland 0.54 and older** (`hyprland.conf`): [`packaging/hyprland.conf`](packaging/hyprland.conf)
+
+With blur on, set `"glass_alpha": 0.7` in `~/.local/share/mochi/config.json` so it shows through.
+
+"Open at Login" in her menu writes an XDG autostart entry. Hyprland only runs those if you use something like **uwsm** or **dex**, so the snippet's autostart line is the sure way.
+
+## How she reaches Claude
+
+Mochi finds every running `claude` and talks to the one whose terminal you used last. How she gets text into it depends on where it runs:
+
+| Claude is running… | How Mochi sends | Notes |
+|---|---|---|
+| **inside tmux** (recommended) | `tmux paste-buffer` + Enter | Your focus never moves, your clipboard is never touched, works even if the window is hidden. Start Claude with `tmux new -A -s claude claude`. |
+| in **kitty** | `kitten @ send-text` | Needs `allow_remote_control yes` and `listen_on unix:@kitty` in `kitty.conf`. |
+| in **WezTerm** | `wezterm cli send-text` | Works out of the box. |
+| in **Alacritty**, foot, Ghostty, … | Focuses the window (Hyprland/Sway), pastes with `wtype`, presses Return, then puts you back where you were and restores your clipboard | Like the Mac version. Don't type during that half-second. |
+
+If no Claude is running, she opens your terminal with `claude --continue` (inside tmux, if you chose that) and sends your message once it's up.
 
 ## Using her
 
 | | |
 |---|---|
-| **Click** | Open her message bar, type, press Return |
+| **Click** | Open her message bar, type, press Return. Esc folds her up. |
 | **Drag** | Move her anywhere along the bottom of the screen |
-| **Right-click** | Her menu: change color, open at login, quit |
+| **Right-click** | Her menu: open at login, color, quit |
 | **Hover** | She'll wiggle. Keep hovering and she gets petted 💗 |
-
-If no Terminal tab is running Claude, she opens one with `claude --continue` and sends your message there.
+| **Tray icon** | Find Mochi, message her, to-do list, show/hide (Waybar's `tray` module, KDE, …) |
 
 ## Ask Claude to change her
 
@@ -82,27 +103,43 @@ The installer teaches Claude Code how to work on Mochi (it adds a small `mochi` 
 > "Make Mochi purple"
 > "Have Mochi do a backflip when Claude finishes"
 
-Claude edits her code, rebuilds her and relaunches her. Her code is signed with a certificate the installer makes just for your Mac (kept in your login keychain), so macOS remembers her permissions every time she's rebuilt.
-
-## Updates
-
-```bash
-cd mochi && ./install.sh --update
-```
-
-This gets the newest Mochi from GitHub and rebuilds her, keeping your color and settings. (Or just ask Claude: "update Mochi".)
+Claude edits her code, reinstalls her and restarts her.
 
 ## Make her yours
 
-Mochi is one Swift file, `Sources/Mochi.swift`, so she's easy to remix: her outfits, moods, colors and animations are all in there. Change anything, then run `./install.sh --rebuild` to rebuild and relaunch her (or ask Claude to do it).
+Mochi is a small Python package, so she's easy to remix:
 
-The hook script, `hooks/notify.py`, is what tells Mochi what Claude is doing. It writes small JSON files into `~/Library/Application Support/Mochi/`, which she watches.
+| File | What's in it |
+|---|---|
+| [`mochi/goo.py`](mochi/goo.py) | The goo: shape, eyes, moods, outfits (pixel cells, y-up, like the original) |
+| [`mochi/parts.py`](mochi/parts.py) | The paper plane, the bobbing name, badges |
+| [`mochi/bar.py`](mochi/bar.py) | The pill, reply bubble, questions, to-do list, menus, sending |
+| [`mochi/terminals.py`](mochi/terminals.py) | Finding Claude sessions and typing into them |
+| [`mochi/compositor.py`](mochi/compositor.py) | Hyprland / Sway specifics |
+| [`mochi/config.py`](mochi/config.py) | Every setting and its default (`~/.local/share/mochi/config.json`) |
+| [`hooks/notify.py`](hooks/notify.py) | The Claude Code hook that tells Mochi what Claude is doing (writes JSON files she watches) |
+
+Change anything, then `./install.sh --rebuild`. To try looks without waiting: `PB_HOUR=8 mochi`, `PB_WEEKDAY=6 PB_HOUR=14 mochi`, `PB_MOOD=sleepy mochi` (also `pet`, `proud`, `worried`), `PB_DEMO=send mochi`.
 
 Add to-dos from the command line (or let Claude do it):
 
 ```bash
-python3 ~/Library/Application\ Support/Mochi/hooks/todo.py add "Upload the new images"
+python3 ~/.local/share/mochi/hooks/todo.py add "Upload the new images"
 ```
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for how the code fits together, tests, and adding support for another terminal or compositor.
+
+## Updates
+
+```bash
+cd linux-mochi && ./install.sh --update
+```
+
+## Troubleshooting
+
+- **Messages don't arrive:** look in `~/.local/state/mochi/mochi.log`. She flashes a short reason on the pill too (`install wtype`, `no window`, `use tmux`, …).
+- **She's an ordinary window instead of floating:** your compositor lacks layer-shell (GNOME), or `gtk4-layer-shell` isn't installed.
+- **Run her in a terminal** (`mochi`) to see errors.
 
 ## Uninstall
 
@@ -110,8 +147,10 @@ python3 ~/Library/Application\ Support/Mochi/hooks/todo.py add "Upload the new i
 ./uninstall.sh
 ```
 
-This removes the app, her data, her Claude Code hooks and the Mochi skill.
+This removes her, her data, her Claude Code hooks and the Mochi skill.
 
 ---
 
-<p align="center">Made with 🫧 by <a href="https://jessa.art">Jessa Wolfe</a>.</p>
+The original macOS app is kept in [`macos/`](macos/) for reference.
+
+<p align="center">Mochi made with 🫧 by <a href="https://jessa.art">Jessa Wolfe</a>. Linux port by <a href="https://github.com/chiangs">chiangs</a>.</p>

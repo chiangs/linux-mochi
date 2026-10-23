@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=Mochi
+Comment=A little pixel goo that talks to Claude Code for you
+Exec=mochi
+Icon=mochi
+Terminal=false
+Categories=Utility;Development;
+StartupNotify=false

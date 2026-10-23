@@ -1,0 +1,19 @@
+name: CI
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    container: archlinux:latest
+    steps:
+      - name: Install packages
+        run: pacman -Syu --noconfirm --needed git python python-gobject python-cairo gtk4 gtk4-layer-shell python-pytest ruff tmux noto-fonts
+      - uses: actions/checkout@v4
+      - name: Lint
+        run: ruff check .
+      - name: Shell syntax
+        run: bash -n install.sh && bash -n uninstall.sh
+      - name: Tests
+        run: python -m pytest -q

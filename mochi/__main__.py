@@ -19,8 +19,12 @@ def main():
     if "--version" in sys.argv:
         from . import __version__
         print(__version__); return 0
+    if sys.argv[1:2] == ["setup"]:
+        from .setup import main as setup
+        return setup(sys.argv[2:])
     have_ls = preload_layer_shell()
-    os.environ.setdefault("GDK_BACKEND", "wayland")
+    if os.environ.get("WAYLAND_DISPLAY"):
+        os.environ.setdefault("GDK_BACKEND", "wayland")
 
     import gi
     gi.require_version("Gtk", "4.0")

@@ -1,0 +1,7 @@
+post_install() {
+  echo "  To connect Mochi to Claude Code, run (as your user, not root):  mochi setup"
+  echo "  Then start her with:  mochi"
+  echo "  Hyprland snippets (blur, start with Hyprland): /usr/share/mochi/hyprland.lua (0.55+) or hyprland.conf"
+}
+post_upgrade() { echo "  If Mochi's hooks changed, run: mochi setup"; }
+pre_remove() { echo "  To take Mochi's hooks out of Claude Code, each user can run:  mochi setup --remove  (before removing)"; }
