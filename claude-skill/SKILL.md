@@ -34,7 +34,9 @@ Mochi is a small Python/GTK4 app: a pixel goo that floats at the bottom of the s
 
    If she doesn't come back, run `mochi` in a terminal to see the error, fix it, and rebuild again.
 
-To try a look without waiting for the right moment: `PB_HOUR=8 mochi` (morning coffee), `PB_WEEKDAY=6 PB_HOUR=14 mochi` (Friday sunglasses), `PB_MOOD=sleepy|pet|proud|worried mochi`, `PB_DEMO=send mochi` (the send animation, nothing sent), `PB_DEMO=social mochi` (sample badges). Quit the running Mochi first (right-click → Quit).
+To try a look without waiting for the right moment: `PB_HOUR=8 mochi` (morning coffee), `PB_WEEKDAY=6 PB_HOUR=14 mochi` (Friday sunglasses), `PB_MOOD=sleepy|pet|proud|worried mochi`, `PB_DEMO=send mochi` (the send animation, nothing sent), `PB_DEMO=social mochi` (sample badges). Quit the running Mochi first: `mochi --quit`.
+
+The running Mochi takes commands too (the user may have bound them to keys): `mochi --message`, `--toggle`, `--todo`, `--hide`, `--quit`.
 
 Small things don't need code: to change her color, edit `color` in `{{CONFIG}}` (or right-click her → color), then restart her (`mochi --quit; mochi`).
 

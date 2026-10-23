@@ -206,9 +206,6 @@ def wake_dir(cfg):
 
 # ---- the paste route: wl-clipboard + wtype ----
 
-KEYCODES = {"return": "Return", "enter": "Return"}
-
-
 def wtype_combo(combo):
     """'ctrl+shift+v' -> wtype arguments"""
     parts = [p.strip().lower() for p in combo.split("+") if p.strip()]

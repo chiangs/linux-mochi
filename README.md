@@ -83,7 +83,7 @@ Mochi finds every running `claude` and talks to the one whose terminal you used 
 | in **WezTerm** | `wezterm cli send-text` | Works out of the box. |
 | in **Alacritty**, foot, Ghostty, … | Focuses the window (Hyprland/Sway), pastes with `wtype`, presses Return, then puts you back where you were and restores your clipboard | Like the Mac version. Don't type during that half-second. |
 
-If no Claude is running, she opens your terminal with `claude --continue` (inside tmux, if you chose that) in the folder of your most recent Claude session, and sends your message once it's up. If Claude first asks whether to trust that folder, she waits for you to answer it in the terminal and then sends. Set `wake_dir` in her [settings](#settings) to always start somewhere specific. A terminal she opened closes again once your message is in (Claude keeps running in tmux; `tmux attach` brings it back).
+If no Claude is running, she opens your terminal with `claude` (inside tmux, if you chose that) in the folder of your most recent Claude session, picking up the last conversation there if there is one, and sends your message once it's up. If Claude first asks whether to trust that folder, she waits for you to answer it in the terminal and then sends. Set `wake_dir` in her [settings](#settings) to always start somewhere specific. A terminal she opened closes again once your message is in (Claude keeps running in tmux; `tmux attach` brings it back).
 
 ## Using her
 
@@ -201,7 +201,10 @@ cd linux-mochi && ./install.sh --update
 
 - **Messages don't arrive:** look in `~/.local/state/mochi/mochi.log`. She flashes a short reason on the pill too (`install wtype`, `no window`, `use tmux`, …).
 - **She's an ordinary window instead of floating:** your compositor lacks layer-shell (GNOME), or `gtk4-layer-shell` isn't installed.
-- **Run her in a terminal** (`mochi`) to see errors.
+- **Claude asks whether to trust a folder:** Mochi waits for you to answer it in the terminal, then sends. "Yes" lets Claude read, edit and run files in that folder; for your home folder, consider pointing `wake_dir` at a project folder instead.
+- **Old Claude sessions piling up in tmux:** `tmux ls` lists them, `tmux kill-session -t <name>` ends one.
+- **The shortcut doesn't open her:** `hyprctl binds | grep -i mochi` should list it, and `which mochi` should print `~/.local/bin/mochi` (otherwise use that full path in the bind).
+- **Run her in a terminal** (`mochi --quit; mochi`) to see errors.
 
 ## Uninstall
 

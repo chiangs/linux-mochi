@@ -12,13 +12,15 @@ Mochi ──terminals.Sender──▶ tmux / kitty / wezterm / (compositor focus
 - **The app** (`mochi/`) is Python + GTK4. Every window is a wlr-layer-shell overlay (`layer.py`) anchored to the bottom of one output, placed by its margins. The pill is drawn by hand with Cairo (`bar.py: draw_pill`, `goo.py`, `parts.py`), in **y-up** coordinates like the original AppKit views, so the pixel art ports one-to-one. The pop-ups are GTK widgets styled by `ui.py`.
 - **Sending** (`terminals.py`) finds every `claude` process through `/proc`, reads its environment to see where it runs, and picks a route per session.
 - **The compositor** (`compositor.py`) covers what Wayland doesn't let apps do: the global cursor position, listing and focusing windows. Hyprland and Sway are implemented.
+- **Before typing into a Claude**, `Bar.deliver` reads its screen where the route allows (`terminals.screen`) and waits out Claude Code's folder-trust question (`asking_trust`), since a Return there picks "No, exit". Terminals Mochi opened herself are tracked (`terminals.OPENED`) and detached again afterwards (`close_opened`).
+- **One instance:** `__main__.py` uses `Gtk.Application` command-line handling, so `mochi --message` etc. are forwarded to the running Mochi (`Bar.command`). Opened that way she holds the keyboard exclusively (`Bar.hold_keyboard`); loosening it straight away makes Hyprland hand focus back.
 
 The macOS original is in `macos/`. The Python mirrors its structure and comments, which helps when porting new upstream features.
 
 ## Running from the checkout
 
 ```bash
-python3 -m mochi          # quit the installed one first (right-click → Quit)
+mochi --quit; python3 -m mochi   # quit the installed one first
 python3 -m pytest -q      # tests (some need tmux, PyGObject)
 ruff check .
 ```
