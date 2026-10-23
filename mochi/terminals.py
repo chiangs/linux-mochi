@@ -311,11 +311,19 @@ class Sender:
             done(str(e))
 
     def focus(self, s):
-        """bring the session's terminal (and its tmux pane) to the front"""
+        """bring the session's terminal (and its tmux pane) to the front. A tmux session nobody is attached to
+        (its window was closed, Claude still running) gets a new terminal attached to it."""
         if self.route(s) == "tmux":
             try:
                 pane = s.env["TMUX_PANE"]
                 _tmux(s, "select-window", "-t", pane); _tmux(s, "select-pane", "-t", pane)
+                if not tmux_clients(s):
+                    name = _tmux(s, "display-message", "-p", "-t", pane, "#{session_name}").strip()
+                    sock = (s.env.get("TMUX") or "").split(",")[0]
+                    cmd = terminal_command(self.cfg, ["tmux"] + (["-S", sock] if sock else []) + ["attach-session", "-t", name], str(Path.home()))
+                    if cmd:
+                        spawn(cmd)
+                        return True
             except (RuntimeError, OSError, subprocess.TimeoutExpired, KeyError):
                 pass
         w = self.window_for(s)
@@ -398,22 +406,27 @@ def find_terminal(pref="auto"):
     return None
 
 
-def wake_command(cfg):
-    """the command that opens a terminal running `claude --continue` (in tmux, if wanted and installed)"""
-    if cfg.get("wake_command"):
-        return list(cfg["wake_command"]) if isinstance(cfg["wake_command"], list) else shlex.split(cfg["wake_command"])
+def terminal_command(cfg, inner, d):
+    """the command that opens the user's terminal in folder d, running `inner`"""
     term = find_terminal(cfg.get("terminal", "auto"))
     if not term: return None
-    d = wake_dir(cfg)
-    inner = [find_claude(), "--continue"]
-    if cfg.get("wake_in_tmux", True) and shutil.which("tmux"):
-        inner = ["tmux", "new-session", "-s", f"claude-{int(time.time()) % 100000}", "-c", d, shlex.join(inner)]
     t = os.path.basename(term)
     if t == "kitty": return [term, "--directory", d, *inner]
     if t == "wezterm": return [term, "start", "--cwd", d, "--", *inner]
     if t in ("foot", "footclient"): return [term, "-D", d, *inner]
     if t == "ghostty": return [term, f"--working-directory={d}", "-e", *inner]
     return [term, "--working-directory", d, "-e", *inner]   # alacritty, and most others take -e
+
+
+def wake_command(cfg):
+    """the command that opens a terminal running `claude --continue` (in tmux, if wanted and installed)"""
+    if cfg.get("wake_command"):
+        return list(cfg["wake_command"]) if isinstance(cfg["wake_command"], list) else shlex.split(cfg["wake_command"])
+    d = wake_dir(cfg)
+    inner = [find_claude(), "--continue"]
+    if cfg.get("wake_in_tmux", True) and shutil.which("tmux"):
+        inner = ["tmux", "new-session", "-s", f"claude-{int(time.time()) % 100000}", "-c", d, shlex.join(inner)]
+    return terminal_command(cfg, inner, d)
 
 
 def spawn(cmd):
