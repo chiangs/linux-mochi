@@ -98,6 +98,7 @@ class Bar:
         self.status_text, self.status_color = STATUS_IDLE, white(0.6)
 
         self.bubble = self.q_panel = self.now_panel = self.todo_panel = self.menu_panel = None
+        self.grabbed, self.grab_token, self.last_typed = False, None, 0.0
         self.menu_hover = False
         self.build_pill()
 
@@ -145,6 +146,7 @@ class Bar:
         self.field.set_size_request(self.W - 46 - 160, 22)
         self.field.set_visible(False)
         self.field.connect("activate", lambda *_: self.send())
+        self.field.connect("changed", lambda *_: setattr(self, "last_typed", time.monotonic()))
         ov.add_overlay(self.field)
         self.panel.set_child(ov)
 
@@ -377,8 +379,9 @@ class Bar:
             self.panel.keyboard("exclusive" if grab else "on_demand")
             self.panel.present()
             self.field.grab_focus()
-            if grab: later(400, lambda: self.open and self.panel.keyboard("on_demand"))
+            if grab: self.hold_keyboard()
         else:
+            self.grabbed = False
             self.field.set_visible(False)
             # hand the keyboard back to whatever you were in
             self.panel.keyboard("none")
@@ -494,10 +497,22 @@ class Bar:
         if not self.panel.get_visible(): self.find_mochi()
         if self.open:
             # already open: just take the keyboard
-            self.panel.keyboard("exclusive"); self.panel.present(); self.field.grab_focus()
-            later(400, lambda: self.open and self.panel.keyboard("on_demand"))
+            self.panel.keyboard("exclusive"); self.panel.present(); self.field.grab_focus(); self.hold_keyboard()
         else:
             self.set_open(True, grab=True)
+
+    # opened from a keybinding, she keeps the keyboard until you send, press Esc, or 20 s pass with nothing typed.
+    # (Loosening it to on-demand right away makes Hyprland hand focus straight back to the window you were in.)
+    def hold_keyboard(self):
+        self.grabbed = True
+        self.last_typed = time.monotonic()
+        token = object(); self.grab_token = token
+        def check():
+            if self.grab_token is not token or not self.open or not self.grabbed: return False
+            if time.monotonic() - self.last_typed > 20 and not self.field.get_text() and not self.sending:
+                self.set_open(False); return False
+            return True
+        GLib.timeout_add(1000, check)
 
     def command(self, args):
         """mochi --message | --toggle | --todo | --find | --quit, sent to the running Mochi (for keybindings)"""
