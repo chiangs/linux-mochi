@@ -1030,11 +1030,17 @@ class Bar:
         self.show_bubble("Claude is asking whether to trust this folder. Answer it in your terminal "
                          "and I'll send your message right after.", "waiting", react=False)
         self.goo.worry()
-        tries = [0]
+        tries, cur = [0], [s]
         def check():
             tries[0] += 1
+            s = cur[0]
             if not s.alive():
-                self.goo.asking = False; self.sending = False; self.goo.worry(); self.flash("Claude exited", False); return
+                # Claude may have restarted in the same terminal; otherwise it quit (e.g. "No, exit"): keep the message
+                n = terminals.same_terminal(s)
+                if n is None:
+                    if tries[0] < 6: later(500, check); return
+                    self.goo.asking = False; self.sending = False; self.hide_bubble(); self.goo.worry(); self.flash("Claude exited", False); return
+                cur[0] = s = n
             if terminals.asking_trust(terminals.screen(s)):
                 if tries[0] < 240: later(500, check)
                 else: self.goo.asking = False; self.sending = False; self.flash("still waiting: resend", False)
@@ -1044,7 +1050,7 @@ class Bar:
             later(1500, lambda: self.deliver(s, t))
         later(500, check)
 
-    # no Claude running anywhere: open a terminal running `claude --continue`, wait for it, then send
+    # no Claude running anywhere: open a terminal running `claude` (--continue where there's a conversation), wait for it, then send
     def wake(self, t):
         cmd = terminals.wake_command(self.cfg)
         if not cmd: self.failed("no terminal found"); return

@@ -9,6 +9,7 @@
 # "send" in config.json can force one ("tmux", "kitty", "wezterm", "paste"); "auto" picks as above.
 import json
 import os
+import re
 import shlex
 import shutil
 import subprocess
@@ -181,6 +182,20 @@ def last_dir():
         if isinstance(j, dict) and j.get("cwd") and os.path.isdir(j["cwd"]) and j.get("time", 0) > best[0]:
             best = (j["time"], j["cwd"])
     return best[1]
+
+
+def has_conversation(d):
+    """whether Claude Code has a saved conversation for folder d (~/.claude/projects/<the path with every non-alphanumeric as ->)"""
+    p = Path.home() / ".claude" / "projects" / re.sub(r"[^A-Za-z0-9]", "-", str(d))
+    return p.is_dir() and any(p.glob("*.jsonl"))
+
+
+def same_terminal(s):
+    """the Claude now running where s was (it may have restarted in the same tmux pane or terminal), or None"""
+    for n in sessions():
+        if s.env.get("TMUX_PANE") and n.env.get("TMUX_PANE") == s.env["TMUX_PANE"] and n.env.get("TMUX") == s.env.get("TMUX"): return n
+        if s.tty and n.tty == s.tty: return n
+    return None
 
 
 def wake_dir(cfg):
@@ -423,7 +438,8 @@ def wake_command(cfg):
     if cfg.get("wake_command"):
         return list(cfg["wake_command"]) if isinstance(cfg["wake_command"], list) else shlex.split(cfg["wake_command"])
     d = wake_dir(cfg)
-    inner = [find_claude(), "--continue"]
+    # pick up the last conversation there, if there is one (`--continue` with none just errors and quits)
+    inner = [find_claude()] + (["--continue"] if has_conversation(d) else [])
     if cfg.get("wake_in_tmux", True) and shutil.which("tmux"):
         inner = ["tmux", "new-session", "-s", f"claude-{int(time.time()) % 100000}", "-c", d, shlex.join(inner)]
     return terminal_command(cfg, inner, d)

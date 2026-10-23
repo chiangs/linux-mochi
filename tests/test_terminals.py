@@ -33,6 +33,7 @@ def test_wake_command(monkeypatch):
     have = {"alacritty", "tmux", "kitty", "claude"}
     monkeypatch.setattr(shutil, "which", lambda n, path=None: f"/usr/bin/{n}" if n in have else None)
     monkeypatch.delenv("TERMINAL", raising=False)
+    monkeypatch.setattr(terminals, "has_conversation", lambda d: True)
     cmd = terminals.wake_command({"terminal": "auto", "wake_in_tmux": True, "wake_dir": "/w"})
     assert cmd[:4] == ["alacritty", "--working-directory", "/w", "-e"] and cmd[4] == "tmux" and "--continue" in cmd[-1]
     cmd = terminals.wake_command({"terminal": "kitty", "wake_in_tmux": False, "wake_dir": "/w"})
@@ -89,3 +90,23 @@ def test_wake_dir_follows_last_session(data_home, monkeypatch, tmp_path):
     (data_home / "working.json").write_text(json.dumps({"cwd": "/no/such/dir", "time": t.time() + 5}))
     assert terminals.wake_dir({"wake_dir": "last"}) == str(proj)       # newest folder that still exists
     assert terminals.wake_dir({"wake_dir": "~/code"}).endswith("/code")
+
+
+def test_has_conversation(tmp_path, monkeypatch):
+    from pathlib import Path
+    monkeypatch.setattr(Path, "home", lambda: tmp_path)
+    proj = tmp_path / ".claude" / "projects" / "-home-me-my-proj"
+    proj.mkdir(parents=True)
+    assert not terminals.has_conversation("/home/me/my.proj")
+    (proj / "abc.jsonl").write_text("{}")
+    assert terminals.has_conversation("/home/me/my.proj")
+    assert not terminals.has_conversation("/home/me")
+
+
+def test_wake_without_conversation_starts_fresh(monkeypatch, tmp_path):
+    from pathlib import Path
+    monkeypatch.setattr(Path, "home", lambda: tmp_path)
+    monkeypatch.setattr(shutil, "which", lambda n, path=None: f"/usr/bin/{n}" if n in {"alacritty", "claude"} else None)
+    monkeypatch.delenv("TERMINAL", raising=False)
+    cmd = terminals.wake_command({"wake_dir": str(tmp_path), "wake_in_tmux": False})
+    assert cmd[-1] == "/usr/bin/claude"          # no --continue: there's nothing to continue here
