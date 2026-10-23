@@ -90,7 +90,7 @@ if ! swiftc -O Sources/Mochi.swift -o build/Mochi.app/Contents/MacOS/Mochi 2> bu
     swiftc -O -vfsoverlay build/overlay.yaml Sources/Mochi.swift -o build/Mochi.app/Contents/MacOS/Mochi
   else cat build/errors.txt; exit 1; fi
 fi
-cp assets/Mochi.icns build/Mochi.app/Contents/Resources/Mochi.icns
+cp Mochi.icns build/Mochi.app/Contents/Resources/Mochi.icns
 cat > build/Mochi.app/Contents/Info.plist <<PLIST
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">

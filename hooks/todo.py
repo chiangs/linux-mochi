@@ -8,7 +8,7 @@ Mochi watches the file and pops up "added to your to-do list" when something new
 """
 import json, os, sys, time, uuid
 
-FILE = os.path.expanduser("~/Library/Application Support/Mochi/todos.json")
+FILE = os.path.join(os.environ.get("XDG_DATA_HOME") or os.path.expanduser("~/.local/share"), "mochi", "todos.json")
 
 
 def load():

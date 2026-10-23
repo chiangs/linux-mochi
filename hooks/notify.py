@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
-# Claude Code hooks for Mochi . Everything lands in ~/Library/Application Support/Mochi/.
+# Claude Code hooks for Mochi. Everything lands in $XDG_DATA_HOME/mochi (usually ~/.local/share/mochi).
 #   (no flag)     Stop hook: the reply, as a short summary plus the whole text (cleaned up) for the paged bubble -> last.json
 #   --working     UserPromptSubmit: Claude has started working (Mochi thinks, the meter starts)          -> working.json
 #   --progress    PostToolUse: what Claude has said so far this turn, plus time and tokens for the meter -> progress.json
-#   --question    PreToolUse on AskUserQuestion: the question and its options, and which Terminal tab    -> question.json
+#   --question    PreToolUse on AskUserQuestion: the question and its options, and which terminal       -> question.json
 #   --answered    PostToolUse on AskUserQuestion: the question is answered, take the pop-up down
-import json, os, re, subprocess, sys, time
+import json, os, re, sys, time
 
-DIR = os.path.expanduser("~/Library/Application Support/Mochi")
+DIR = os.path.join(os.environ.get("XDG_DATA_HOME") or os.path.expanduser("~/.local/share"), "mochi")
 OUT = os.path.join(DIR, "last.json")
 
 
@@ -114,20 +114,29 @@ def summarize(t, limit=150):
     return out
 
 
-def tty_of_claude():
-    # walk up from this hook to the claude process and read its terminal (like /dev/ttys002)
+def is_claude(cmd):
+    # the claude process: "claude", "/path/to/claude --continue", or node running Claude Code's cli.js
+    first = os.path.basename(cmd[0]) if cmd else ""
+    return first == "claude" or any(a.endswith("/claude") or "claude-code/cli" in a for a in cmd[:2])
+
+
+def claude_of_hook():
+    # walk up from this hook to the claude process; Mochi uses its pid to find its terminal (tmux pane, window, tty)
     pid = os.getppid()
-    for _ in range(6):
+    for _ in range(8):
         try:
-            out = subprocess.run(["ps", "-o", "tty=,ppid=", "-p", str(pid)], capture_output=True, text=True).stdout.split()
+            cmd = open(f"/proc/{pid}/cmdline", "rb").read().decode("utf-8", "ignore").split("\0")
+            stat = open(f"/proc/{pid}/stat").read()
         except OSError:
-            return ""
-        if len(out) < 2:
-            return ""
-        if out[0].startswith("ttys"):
-            return "/dev/" + out[0]
-        pid = int(out[1])
-    return ""
+            return 0, ""
+        if is_claude(cmd):
+            tty_nr = int(stat.rsplit(")", 1)[1].split()[4])
+            major, minor = (tty_nr >> 8) & 0xFFF, (tty_nr & 0xFF) | ((tty_nr >> 12) & 0xFFF00)
+            return pid, f"/dev/pts/{minor + (major - 136) * 256}" if 136 <= major <= 143 else ""
+        pid = int(stat.rsplit(")", 1)[1].split()[1])
+        if pid <= 1:
+            break
+    return 0, ""
 
 
 d = json.load(sys.stdin)
@@ -173,7 +182,8 @@ if "--progress" in sys.argv:
 
 if "--question" in sys.argv:
     qs = (d.get("tool_input") or {}).get("questions") or []
-    write("question.json", {"project": project, "tty": tty_of_claude(), "questions": qs,
+    pid, tty = claude_of_hook()
+    write("question.json", {"project": project, "pid": pid, "tty": tty, "questions": qs,
                             "id": d.get("tool_use_id", str(time.time())), "time": time.time()})
     sys.exit(0)
 
